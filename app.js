@@ -64,7 +64,15 @@ async function loadBookDataAsync() {
       req.onerror = () => reject(req.error);
     });
     if (data) {
-      bookData = data;
+      const targetVersion = (window.DEFAULT_BOOK_DATA && window.DEFAULT_BOOK_DATA.version) || 1;
+      if (data.version !== targetVersion) {
+        const customPages = (data.pages || []).filter((p) => String(p.id).startsWith("p_"));
+        bookData = JSON.parse(JSON.stringify(window.DEFAULT_BOOK_DATA));
+        bookData.pages = [...bookData.pages, ...customPages];
+        await saveBookData();
+      } else {
+        bookData = data;
+      }
       return;
     }
   } catch (e) {
@@ -350,16 +358,25 @@ function createFaceElement(data, faceClass, pageNumber) {
       <span class="env-icon">
         <span class="material-symbols-rounded">mail</span>
       </span>
-      <strong>اضغطي هنا لفتح الرسالة</strong>
+      <button type="button" class="secret-open-btn">
+        <span class="material-symbols-rounded" style="font-size:18px">mark_email_unread</span>
+        <span>اضغطي على الرسالة</span>
+      </button>
       <div class="secret-revealed ${fontClass} ${sizeClass}">${escapeHtml(data.text || "")}</div>
     `;
-    env.addEventListener("click", (e) => {
+    const openBtn = env.querySelector(".secret-open-btn");
+    const openBtnLabel = openBtn.querySelector("span:last-child");
+    const toggleSecret = (e) => {
       e.stopPropagation();
       env.classList.toggle("opened");
-      if (env.classList.contains("opened")) {
-        spawnSparkleBurst(e.clientX, e.clientY);
+      const opened = env.classList.contains("opened");
+      openBtnLabel.textContent = opened ? "إخفاء الرسالة" : "اضغطي على الرسالة";
+      if (opened) {
+        spawnSparkleBurst(e.clientX || window.innerWidth / 2, e.clientY || window.innerHeight / 2);
       }
-    });
+    };
+    openBtn.addEventListener("click", toggleSecret);
+    env.addEventListener("click", toggleSecret);
     body.appendChild(env);
   } else {
     const noteBox = document.createElement("div");

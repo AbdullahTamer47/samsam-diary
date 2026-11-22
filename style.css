@@ -1273,6 +1273,55 @@ body {
   gap: 4px;
 }
 
+.secret-open-btn {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+  animation: pulseSoft 2s infinite;
+}
+
+.secret-open-btn:hover {
+  background: rgba(255, 255, 255, 0.36);
+  transform: scale(1.05);
+}
+
+.secret-envelope.opened .secret-open-btn {
+  animation: none;
+  background: rgba(30, 15, 36, 0.28);
+}
+
+.add-pulse-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.add-pulse-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  animation: btnShimmer 3.2s infinite;
+}
+
+@keyframes btnShimmer {
+  0% { left: -100%; }
+  45%, 100% { left: 140%; }
+}
+
 .toast-banner {
   position: fixed;
   bottom: 24px;
