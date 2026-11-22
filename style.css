@@ -989,6 +989,7 @@ body {
 }
 
 .form-row input[type="text"],
+.form-row input[type="number"],
 .form-row textarea,
 .form-row select {
   width: 100%;
@@ -1320,6 +1321,137 @@ body {
 @keyframes btnShimmer {
   0% { left: -100%; }
   45%, 100% { left: 140%; }
+}
+
+.color-picker {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.color-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.color-dot.active {
+  transform: scale(1.18);
+  border: 3px solid #ff4f9a;
+  box-shadow: 0 0 10px rgba(255, 98, 165, 0.75);
+}
+
+.font-preview-box {
+  border-radius: 14px;
+  padding: 12px 14px;
+  border: 1.5px dashed rgba(255, 148, 194, 0.5);
+  text-align: center;
+  transition: background 0.25s, color 0.25s;
+}
+
+.font-preview-box .preview-label {
+  display: block;
+  font-size: 0.72rem;
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+
+.font-preview-box p {
+  margin: 0;
+}
+
+/* شريط التمرير داخل بطاقة الأغنية + المشغل العائم */
+.song-seek-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.song-seek-slider,
+.mini-seek {
+  width: 100%;
+  accent-color: #ff62a5;
+  cursor: pointer;
+  height: 5px;
+  direction: ltr;
+}
+
+.song-time-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: #ffc2dc;
+  direction: ltr;
+}
+
+.mini-player {
+  width: min(92vw, 440px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(45, 18, 52, 0.92);
+  border: 1px solid rgba(255, 148, 194, 0.45);
+  border-radius: 999px;
+  padding: 7px 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 15;
+  margin-bottom: 4px;
+}
+
+.mini-play-btn,
+.mini-close-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #ff62a5, #e83e8c);
+  color: #fff;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.mini-close-btn {
+  background: rgba(255, 255, 255, 0.12);
+  width: 28px;
+  height: 28px;
+}
+
+.mini-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mini-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.76rem;
+  color: #ffd6e8;
+}
+
+.mini-song-name {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mini-time {
+  direction: ltr;
+  font-size: 0.7rem;
+  opacity: 0.85;
+  flex-shrink: 0;
 }
 
 .toast-banner {

@@ -1,7 +1,7 @@
 {
   "name": "دفتر ذكريات صمصم",
   "short_name": "دفتر صمصم",
-  "description": "دفتر ذكريات سما (صمصم) الخاص - يشتغل أوفلاين وأونلاين",
+  "description": "دفتر ذكريات صمصم الخاص - يشتغل أوفلاين وأونلاين",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#1e0f24",

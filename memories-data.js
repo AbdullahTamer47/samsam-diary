@@ -1,7 +1,7 @@
 // دفتر ذكريات صمصم الخاص
 
 window.DEFAULT_BOOK_DATA = {
-  version: 2,
+  version: 3,
   cover: {
     title: "دفتر ذكريات صمصم",
     subtitle: "كل حاجة تخصك وتفكرك بأحلى أيامك 🌸",
@@ -35,6 +35,8 @@ window.DEFAULT_BOOK_DATA = {
       fontSize: "lg",
       title: "المود والموسيقى",
       songName: "بلاد النبل",
+      songUrl: "./bilad-al-nobl.mp3",
+      startTime: 64,
       image: "data:image/svg+xml;utf8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="#ff62a5"/><text x="100" y="116" font-size="60" text-anchor="middle">🎧</text></svg>`),
       text: "بحبك دايماً"
     },

@@ -1,11 +1,12 @@
-const CACHE_NAME = "samsam-diary-v7";
+const CACHE_NAME = "samsam-diary-v9";
 const CORE_ASSETS = [
   "./",
   "./index.html",
   "./style.css",
   "./app.js",
   "./memories-data.js",
-  "./manifest.json"
+  "./manifest.json",
+  "./bilad-al-nobl.mp3"
 ];
 
 self.addEventListener("install", (event) => {

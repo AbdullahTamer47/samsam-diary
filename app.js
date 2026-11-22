@@ -257,7 +257,7 @@ function createFaceElement(data, faceClass, pageNumber) {
     face.className = `page-face ${faceClass} cover-face`;
     face.innerHTML = `
       <div class="cover-frame">
-        <div class="cover-ribbon">${escapeHtml(bookData.cover.badge || "Sama's Personal Diary")}</div>
+        <div class="cover-ribbon">${escapeHtml(bookData.cover.badge || "Samsam's Personal Diary")}</div>
         <div class="cover-heart-emblem">
           <span class="material-symbols-rounded">favorite</span>
         </div>
@@ -298,6 +298,7 @@ function createFaceElement(data, faceClass, pageNumber) {
 
   const fontClass = `font-${data.font || "amiri"}`;
   const sizeClass = `size-${data.fontSize || "md"}`;
+  const colorStyle = data.fontColor ? `color:${data.fontColor};` : "";
 
   if (data.type === "photo-note") {
     if (data.image) {
@@ -313,13 +314,17 @@ function createFaceElement(data, faceClass, pageNumber) {
     if (data.text) {
       const p = document.createElement("p");
       p.className = `memory-text ${fontClass} ${sizeClass}`;
+      if (data.fontColor) p.style.color = data.fontColor;
       p.textContent = data.text;
       body.appendChild(p);
     }
   } else if (data.type === "song") {
     const card = document.createElement("div");
     card.className = "song-card";
+    card.dataset.songId = data.id || "";
     const coverImg = data.image || "data:image/svg+xml;utf8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="120" height="120" fill="#ff62a5"/><text x="60" y="75" font-size="48" text-anchor="middle">🎧</text></svg>`);
+    const songSrc = data.songData || data.songUrl || "";
+    const startSec = Number(data.startTime) || 0;
     card.innerHTML = `
       <div class="vinyl-wrap">
         <img class="vinyl-cover" src="${coverImg}" alt="غلاف الأغنية" />
@@ -333,21 +338,48 @@ function createFaceElement(data, faceClass, pageNumber) {
           <span></span><span></span><span></span><span></span>
         </div>
       </div>
+      <div class="song-seek-wrap">
+        <input type="range" class="song-seek-slider" min="0" max="100" value="0" step="0.1" />
+        <div class="song-time-row">
+          <span class="song-cur-time">${formatTime(startSec)}</span>
+          <span class="song-dur-time">--:--</span>
+        </div>
+      </div>
     `;
 
     const playBtn = card.querySelector(".song-play-btn");
     const vinyl = card.querySelector(".vinyl-wrap");
     const eq = card.querySelector(".equalizer");
+    const seekSlider = card.querySelector(".song-seek-slider");
+
+    seekSlider.addEventListener("click", (e) => e.stopPropagation());
+    seekSlider.addEventListener("touchstart", (e) => e.stopPropagation(), { passive: true });
+    seekSlider.addEventListener("input", (e) => {
+      e.stopPropagation();
+      seekCurrentSong(Number(seekSlider.value), {
+        id: data.id,
+        name: data.songName || "أغنية مفضلة",
+        src: songSrc,
+        startTime: startSec,
+        card
+      });
+    });
 
     playBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      toggleSongCard(playBtn, vinyl, eq, data.songData || data.songUrl || "");
+      toggleSongCard(playBtn, vinyl, eq, songSrc, {
+        id: data.id,
+        name: data.songName || "أغنية مفضلة",
+        startTime: startSec,
+        card
+      });
     });
 
     body.appendChild(card);
     if (data.text) {
       const p = document.createElement("p");
       p.className = `memory-text ${fontClass} ${sizeClass}`;
+      if (data.fontColor) p.style.color = data.fontColor;
       p.textContent = data.text;
       body.appendChild(p);
     }
@@ -362,7 +394,7 @@ function createFaceElement(data, faceClass, pageNumber) {
         <span class="material-symbols-rounded" style="font-size:18px">mark_email_unread</span>
         <span>اضغطي على الرسالة</span>
       </button>
-      <div class="secret-revealed ${fontClass} ${sizeClass}">${escapeHtml(data.text || "")}</div>
+      <div class="secret-revealed ${fontClass} ${sizeClass}" style="${colorStyle}">${escapeHtml(data.text || "")}</div>
     `;
     const openBtn = env.querySelector(".secret-open-btn");
     const openBtnLabel = openBtn.querySelector("span:last-child");
@@ -381,7 +413,7 @@ function createFaceElement(data, faceClass, pageNumber) {
   } else {
     const noteBox = document.createElement("div");
     noteBox.className = "note-box";
-    noteBox.innerHTML = `<p class="memory-text ${fontClass} ${sizeClass}">${escapeHtml(data.text || "")}</p>`;
+    noteBox.innerHTML = `<p class="memory-text ${fontClass} ${sizeClass}" style="${colorStyle}">${escapeHtml(data.text || "")}</p>`;
     body.appendChild(noteBox);
   }
 
@@ -529,21 +561,139 @@ soundToggleBtn.addEventListener("click", () => {
   soundIcon.textContent = soundEnabled ? "volume_up" : "volume_off";
 });
 
-let activeAudioEl = null;
+let activeAudioEl = new Audio();
 let melodyTimer = null;
+let currentSongMeta = null;
+
+const miniPlayerEl = document.getElementById("miniPlayer");
+const miniPlayBtn = document.getElementById("miniPlayBtn");
+const miniPlayIcon = document.getElementById("miniPlayIcon");
+const miniSongName = document.getElementById("miniSongName");
+const miniTime = document.getElementById("miniTime");
+const miniSeek = document.getElementById("miniSeek");
+const miniCloseBtn = document.getElementById("miniCloseBtn");
+
+function formatTime(sec) {
+  if (!isFinite(sec) || sec < 0) return "00:00";
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
 
 function stopAllSongAudio() {
-  if (activeAudioEl) {
-    activeAudioEl.pause();
-    activeAudioEl = null;
-  }
+  activeAudioEl.pause();
   if (melodyTimer) {
     clearInterval(melodyTimer);
     melodyTimer = null;
   }
 }
 
-// لحن هادي ناعم بالـ Web Audio API للصفحة الافتراضية لو مفيش ملف MP3 مرفوع
+function setCardUIState(card, playing) {
+  if (!card) return;
+  const btn = card.querySelector(".song-play-btn");
+  const vinyl = card.querySelector(".vinyl-wrap");
+  const eq = card.querySelector(".equalizer");
+  if (btn) {
+    btn.dataset.playing = playing ? "true" : "false";
+    const ic = btn.querySelector(".material-symbols-rounded");
+    if (ic) ic.textContent = playing ? "pause" : "play_arrow";
+  }
+  if (vinyl) vinyl.classList.toggle("spinning", playing);
+  if (eq) eq.classList.toggle("active", playing);
+}
+
+function syncAudioUI() {
+  const dur = activeAudioEl.duration || 0;
+  const cur = activeAudioEl.currentTime || 0;
+  const pct = dur > 0 ? (cur / dur) * 100 : 0;
+  const timeStr = `${formatTime(cur)} / ${formatTime(dur)}`;
+
+  if (miniPlayerEl && !miniPlayerEl.classList.contains("hidden")) {
+    miniSeek.value = pct;
+    miniTime.textContent = timeStr;
+    miniPlayIcon.textContent = activeAudioEl.paused ? "play_arrow" : "pause";
+  }
+
+  if (currentSongMeta && currentSongMeta.id) {
+    document.querySelectorAll(`.song-card[data-song-id="${currentSongMeta.id}"]`).forEach((card) => {
+      const slider = card.querySelector(".song-seek-slider");
+      const curEl = card.querySelector(".song-cur-time");
+      const durEl = card.querySelector(".song-dur-time");
+      if (slider) slider.value = pct;
+      if (curEl) curEl.textContent = formatTime(cur);
+      if (durEl && dur > 0) durEl.textContent = formatTime(dur);
+    });
+  }
+}
+
+activeAudioEl.addEventListener("timeupdate", syncAudioUI);
+activeAudioEl.addEventListener("loadedmetadata", syncAudioUI);
+activeAudioEl.addEventListener("ended", () => {
+  if (currentSongMeta && currentSongMeta.card) {
+    setCardUIState(currentSongMeta.card, false);
+  }
+  activeSongBtn = null;
+  if (miniPlayIcon) miniPlayIcon.textContent = "play_arrow";
+});
+
+if (miniPlayBtn) {
+  miniPlayBtn.addEventListener("click", () => {
+    if (!activeAudioEl.src) return;
+    if (activeAudioEl.paused) {
+      activeAudioEl.play().catch(() => {});
+      if (currentSongMeta && currentSongMeta.card) setCardUIState(currentSongMeta.card, true);
+    } else {
+      activeAudioEl.pause();
+      if (currentSongMeta && currentSongMeta.card) setCardUIState(currentSongMeta.card, false);
+    }
+    syncAudioUI();
+  });
+}
+
+if (miniSeek) {
+  miniSeek.addEventListener("input", () => {
+    const dur = activeAudioEl.duration || 0;
+    if (dur > 0) {
+      activeAudioEl.currentTime = (Number(miniSeek.value) / 100) * dur;
+      syncAudioUI();
+    }
+  });
+}
+
+if (miniCloseBtn) {
+  miniCloseBtn.addEventListener("click", () => {
+    stopAllSongAudio();
+    if (currentSongMeta && currentSongMeta.card) setCardUIState(currentSongMeta.card, false);
+    activeSongBtn = null;
+    currentSongMeta = null;
+    miniPlayerEl.classList.add("hidden");
+  });
+}
+
+function seekCurrentSong(pct, meta) {
+  if (!meta.src) return;
+  if (!currentSongMeta || currentSongMeta.id !== meta.id) {
+    activeAudioEl.src = meta.src;
+    currentSongMeta = meta;
+    if (miniPlayerEl) {
+      miniSongName.textContent = meta.name;
+      miniPlayerEl.classList.remove("hidden");
+    }
+  }
+  const applySeek = () => {
+    if (activeAudioEl.duration > 0) {
+      activeAudioEl.currentTime = (pct / 100) * activeAudioEl.duration;
+      syncAudioUI();
+    }
+  };
+  if (activeAudioEl.readyState >= 1) {
+    applySeek();
+  } else {
+    activeAudioEl.addEventListener("loadedmetadata", applySeek, { once: true });
+  }
+}
+
+// لحن هادي ناعم بالـ Web Audio API لو مفيش ملف صوت مرفوع
 function startGentleMelody() {
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -569,45 +719,53 @@ function startGentleMelody() {
   } catch (e) {}
 }
 
-function toggleSongCard(btn, vinyl, eq, songSrc) {
+function toggleSongCard(btn, vinyl, eq, songSrc, meta = {}) {
   const isPlayingThis = btn.dataset.playing === "true";
-  const iconEl = btn.querySelector(".material-symbols-rounded");
-
-  stopAllSongAudio();
 
   if (activeSongBtn && activeSongBtn !== btn) {
-    activeSongBtn.dataset.playing = "false";
-    activeSongBtn.querySelector(".material-symbols-rounded").textContent = "play_arrow";
-    activeSongBtn.closest(".song-card").querySelector(".vinyl-wrap").classList.remove("spinning");
-    activeSongBtn.closest(".song-card").querySelector(".equalizer").classList.remove("active");
+    setCardUIState(activeSongBtn.closest(".song-card"), false);
   }
 
   if (isPlayingThis) {
-    btn.dataset.playing = "false";
-    iconEl.textContent = "play_arrow";
-    vinyl.classList.remove("spinning");
-    eq.classList.remove("active");
+    stopAllSongAudio();
+    setCardUIState(meta.card, false);
     activeSongBtn = null;
-  } else {
-    btn.dataset.playing = "true";
-    iconEl.textContent = "pause";
-    vinyl.classList.add("spinning");
-    eq.classList.add("active");
-    activeSongBtn = btn;
+    if (miniPlayIcon) miniPlayIcon.textContent = "play_arrow";
+    return;
+  }
 
-    if (songSrc) {
-      activeAudioEl = new Audio(songSrc);
-      activeAudioEl.play().catch(() => startGentleMelody());
-      activeAudioEl.onended = () => {
-        btn.dataset.playing = "false";
-        iconEl.textContent = "play_arrow";
-        vinyl.classList.remove("spinning");
-        eq.classList.remove("active");
-        activeSongBtn = null;
-      };
-    } else {
-      startGentleMelody();
+  stopAllSongAudio();
+  setCardUIState(meta.card, true);
+  activeSongBtn = btn;
+
+  if (songSrc) {
+    const isSameSong = currentSongMeta && currentSongMeta.id === meta.id && activeAudioEl.src;
+    currentSongMeta = meta;
+    if (miniPlayerEl) {
+      miniSongName.textContent = meta.name || "أغنية مفضلة";
+      miniPlayerEl.classList.remove("hidden");
     }
+
+    if (!isSameSong) {
+      activeAudioEl.src = songSrc;
+      const startAt = Number(meta.startTime) || 0;
+      const jumpAndPlay = () => {
+        if (startAt > 0 && activeAudioEl.duration > startAt) {
+          activeAudioEl.currentTime = startAt;
+        }
+        activeAudioEl.play().catch(() => startGentleMelody());
+      };
+      if (activeAudioEl.readyState >= 1) {
+        jumpAndPlay();
+      } else {
+        activeAudioEl.addEventListener("loadedmetadata", jumpAndPlay, { once: true });
+        activeAudioEl.play().catch(() => {});
+      }
+    } else {
+      activeAudioEl.play().catch(() => startGentleMelody());
+    }
+  } else {
+    startGentleMelody();
   }
 }
 
@@ -702,11 +860,40 @@ function resetImagePreview() {
 const editingPageIdEl = document.getElementById("editingPageId");
 const memFontEl = document.getElementById("memFont");
 const memFontSizeEl = document.getElementById("memFontSize");
+const memStartTimeEl = document.getElementById("memStartTime");
 const memAudioFileEl = document.getElementById("memAudioFile");
 const audioLabelText = document.getElementById("audioLabelText");
 const submitBtnText = document.getElementById("submitBtnText");
 const cancelEditBtn = document.getElementById("cancelEditBtn");
+const fontPreviewBox = document.getElementById("fontPreviewBox");
+const fontPreviewText = document.getElementById("fontPreviewText");
 let pendingAudioData = "";
+let selectedFontColor = "";
+
+function updateFontPreview() {
+  if (!fontPreviewBox || !fontPreviewText) return;
+  const f = memFontEl.value || "amiri";
+  const s = memFontSizeEl.value || "md";
+  fontPreviewBox.className = `font-preview-box theme-${selectedTheme}`;
+  fontPreviewText.className = `font-${f} size-${s}`;
+  fontPreviewText.style.color = selectedFontColor || "";
+}
+
+memFontEl.addEventListener("change", updateFontPreview);
+memFontSizeEl.addEventListener("change", updateFontPreview);
+
+document.querySelectorAll(".color-dot").forEach((dot) => {
+  dot.addEventListener("click", () => {
+    document.querySelectorAll(".color-dot").forEach((d) => d.classList.remove("active"));
+    dot.classList.add("active");
+    selectedFontColor = dot.dataset.color || "";
+    updateFontPreview();
+  });
+});
+
+document.querySelectorAll(".theme-dot").forEach((dot) => {
+  dot.addEventListener("click", updateFontPreview);
+});
 
 memAudioFileEl.addEventListener("change", () => {
   const file = memAudioFileEl.files && memAudioFileEl.files[0];
@@ -729,11 +916,14 @@ function resetFormState() {
   document.getElementById("addMemoryForm").reset();
   editingPageIdEl.value = "";
   pendingAudioData = "";
+  selectedFontColor = "";
+  document.querySelectorAll(".color-dot").forEach((d, idx) => d.classList.toggle("active", idx === 0));
   audioLabelText.textContent = "اضغطي لاختيار ملف صوتي";
   submitBtnText.textContent = "حفظ في الدفتر";
   cancelEditBtn.classList.add("hidden");
   resetImagePreview();
   memTypeEl.dispatchEvent(new Event("change"));
+  updateFontPreview();
 }
 
 cancelEditBtn.addEventListener("click", () => {
@@ -750,23 +940,28 @@ document.getElementById("addMemoryForm").addEventListener("submit", async (e) =>
   const title = document.getElementById("memTitle").value.trim() || "ذكرى حلوة 🌸";
   const text = document.getElementById("memText").value.trim();
   const songName = document.getElementById("memSongName").value.trim();
+  const startTime = Number(memStartTimeEl ? memStartTimeEl.value : 0) || 0;
 
   let image = pendingCompressedImage;
   if (!image && fileInputEl.files && fileInputEl.files[0]) {
     image = await compressImage(fileInputEl.files[0], 1000, 0.8);
   }
 
+  const existingPage = editId ? bookData.pages.find((p) => p.id === editId) : null;
   const pageObj = {
     id: editId || "p_" + Date.now(),
     type,
     theme: selectedTheme,
     font,
     fontSize,
+    fontColor: selectedFontColor,
     title,
     text,
     image,
     songName,
-    songData: pendingAudioData
+    songUrl: existingPage ? existingPage.songUrl || "" : "",
+    songData: pendingAudioData,
+    startTime
   };
 
   if (editId) {
@@ -835,6 +1030,11 @@ function openEditPage(idx) {
 
   memFontEl.value = p.font || "amiri";
   memFontSizeEl.value = p.fontSize || "md";
+  if (memStartTimeEl) memStartTimeEl.value = p.startTime || 0;
+  selectedFontColor = p.fontColor || "";
+  document.querySelectorAll(".color-dot").forEach((d) => {
+    d.classList.toggle("active", (d.dataset.color || "") === selectedFontColor);
+  });
   document.getElementById("memTitle").value = p.title || "";
   document.getElementById("memText").value = p.text || "";
   document.getElementById("memSongName").value = p.songName || "";
@@ -843,6 +1043,7 @@ function openEditPage(idx) {
   document.querySelectorAll(".theme-dot").forEach((d) => {
     d.classList.toggle("active", d.dataset.theme === selectedTheme);
   });
+  updateFontPreview();
 
   if (p.image) {
     pendingCompressedImage = p.image;
