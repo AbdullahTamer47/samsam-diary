@@ -288,6 +288,9 @@ function createFaceElement(data, faceClass, pageNumber) {
   const body = document.createElement("div");
   body.className = "page-body";
 
+  const fontClass = `font-${data.font || "amiri"}`;
+  const sizeClass = `size-${data.fontSize || "md"}`;
+
   if (data.type === "photo-note") {
     if (data.image) {
       const frame = document.createElement("div");
@@ -301,7 +304,7 @@ function createFaceElement(data, faceClass, pageNumber) {
     }
     if (data.text) {
       const p = document.createElement("p");
-      p.className = "memory-text";
+      p.className = `memory-text ${fontClass} ${sizeClass}`;
       p.textContent = data.text;
       body.appendChild(p);
     }
@@ -330,13 +333,13 @@ function createFaceElement(data, faceClass, pageNumber) {
 
     playBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      toggleSongCard(playBtn, vinyl, eq);
+      toggleSongCard(playBtn, vinyl, eq, data.songData || data.songUrl || "");
     });
 
     body.appendChild(card);
     if (data.text) {
       const p = document.createElement("p");
-      p.className = "memory-text";
+      p.className = `memory-text ${fontClass} ${sizeClass}`;
       p.textContent = data.text;
       body.appendChild(p);
     }
@@ -348,7 +351,7 @@ function createFaceElement(data, faceClass, pageNumber) {
         <span class="material-symbols-rounded">mail</span>
       </span>
       <strong>اضغطي هنا لفتح الرسالة</strong>
-      <div class="secret-revealed">${escapeHtml(data.text || "")}</div>
+      <div class="secret-revealed ${fontClass} ${sizeClass}">${escapeHtml(data.text || "")}</div>
     `;
     env.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -361,7 +364,7 @@ function createFaceElement(data, faceClass, pageNumber) {
   } else {
     const noteBox = document.createElement("div");
     noteBox.className = "note-box";
-    noteBox.innerHTML = `<p class="memory-text">${escapeHtml(data.text || "")}</p>`;
+    noteBox.innerHTML = `<p class="memory-text ${fontClass} ${sizeClass}">${escapeHtml(data.text || "")}</p>`;
     body.appendChild(noteBox);
   }
 
@@ -509,9 +512,51 @@ soundToggleBtn.addEventListener("click", () => {
   soundIcon.textContent = soundEnabled ? "volume_up" : "volume_off";
 });
 
-function toggleSongCard(btn, vinyl, eq) {
+let activeAudioEl = null;
+let melodyTimer = null;
+
+function stopAllSongAudio() {
+  if (activeAudioEl) {
+    activeAudioEl.pause();
+    activeAudioEl = null;
+  }
+  if (melodyTimer) {
+    clearInterval(melodyTimer);
+    melodyTimer = null;
+  }
+}
+
+// لحن هادي ناعم بالـ Web Audio API للصفحة الافتراضية لو مفيش ملف MP3 مرفوع
+function startGentleMelody() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const notes = [523.25, 659.25, 783.99, 659.25, 587.33, 659.25, 523.25, 392.0];
+    let step = 0;
+    const playNote = () => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = notes[step % notes.length];
+      gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.08, audioCtx.currentTime + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.55);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.6);
+      step++;
+    };
+    playNote();
+    melodyTimer = setInterval(playNote, 620);
+  } catch (e) {}
+}
+
+function toggleSongCard(btn, vinyl, eq, songSrc) {
   const isPlayingThis = btn.dataset.playing === "true";
   const iconEl = btn.querySelector(".material-symbols-rounded");
+
+  stopAllSongAudio();
 
   if (activeSongBtn && activeSongBtn !== btn) {
     activeSongBtn.dataset.playing = "false";
@@ -532,6 +577,20 @@ function toggleSongCard(btn, vinyl, eq) {
     vinyl.classList.add("spinning");
     eq.classList.add("active");
     activeSongBtn = btn;
+
+    if (songSrc) {
+      activeAudioEl = new Audio(songSrc);
+      activeAudioEl.play().catch(() => startGentleMelody());
+      activeAudioEl.onended = () => {
+        btn.dataset.playing = "false";
+        iconEl.textContent = "play_arrow";
+        vinyl.classList.remove("spinning");
+        eq.classList.remove("active");
+        activeSongBtn = null;
+      };
+    } else {
+      startGentleMelody();
+    }
   }
 }
 
@@ -623,9 +682,54 @@ function resetImagePreview() {
   uploadLabelText.textContent = "اضغطي لاختيار صورة من جهازك";
 }
 
+const editingPageIdEl = document.getElementById("editingPageId");
+const memFontEl = document.getElementById("memFont");
+const memFontSizeEl = document.getElementById("memFontSize");
+const memAudioFileEl = document.getElementById("memAudioFile");
+const audioLabelText = document.getElementById("audioLabelText");
+const submitBtnText = document.getElementById("submitBtnText");
+const cancelEditBtn = document.getElementById("cancelEditBtn");
+let pendingAudioData = "";
+
+memAudioFileEl.addEventListener("change", () => {
+  const file = memAudioFileEl.files && memAudioFileEl.files[0];
+  if (!file) return;
+  if (file.size > 12 * 1024 * 1024) {
+    alert("حجم ملف الصوت كبير جداً، يفضل ملف أقل من 12 ميجابايت.");
+    memAudioFileEl.value = "";
+    return;
+  }
+  audioLabelText.textContent = "جاري تجهيز الملف الصوتي...";
+  const reader = new FileReader();
+  reader.onload = () => {
+    pendingAudioData = reader.result;
+    audioLabelText.textContent = `تم اختيار: ${file.name} ✓`;
+  };
+  reader.readAsDataURL(file);
+});
+
+function resetFormState() {
+  document.getElementById("addMemoryForm").reset();
+  editingPageIdEl.value = "";
+  pendingAudioData = "";
+  audioLabelText.textContent = "اضغطي لاختيار ملف صوتي";
+  submitBtnText.textContent = "حفظ في الدفتر";
+  cancelEditBtn.classList.add("hidden");
+  resetImagePreview();
+  memTypeEl.dispatchEvent(new Event("change"));
+}
+
+cancelEditBtn.addEventListener("click", () => {
+  resetFormState();
+  showToast("تم إلغاء التعديل");
+});
+
 document.getElementById("addMemoryForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+  const editId = editingPageIdEl.value;
   const type = memTypeEl.value;
+  const font = memFontEl.value || "amiri";
+  const fontSize = memFontSizeEl.value || "md";
   const title = document.getElementById("memTitle").value.trim() || "ذكرى حلوة 🌸";
   const text = document.getElementById("memText").value.trim();
   const songName = document.getElementById("memSongName").value.trim();
@@ -635,21 +739,36 @@ document.getElementById("addMemoryForm").addEventListener("submit", async (e) =>
     image = await compressImage(fileInputEl.files[0], 1000, 0.8);
   }
 
-  bookData.pages.push({
-    id: "p_" + Date.now(),
+  const pageObj = {
+    id: editId || "p_" + Date.now(),
     type,
     theme: selectedTheme,
+    font,
+    fontSize,
     title,
     text,
     image,
-    songName
-  });
+    songName,
+    songData: pendingAudioData
+  };
+
+  if (editId) {
+    const idx = bookData.pages.findIndex((p) => p.id === editId);
+    if (idx !== -1) {
+      bookData.pages[idx] = pageObj;
+    } else {
+      bookData.pages.push(pageObj);
+    }
+    showToast("تم تعديل الصفحة بنجاح 🌸");
+  } else {
+    bookData.pages.push(pageObj);
+    showToast("تمت إضافة الصفحة بنجاح 🌸");
+  }
 
   await saveBookData();
   renderBook();
   renderManageList();
-  e.target.reset();
-  resetImagePreview();
+  resetFormState();
   studioModal.classList.remove("open");
 });
 
@@ -689,6 +808,47 @@ function compressImage(file, maxSize = 1000, quality = 0.8) {
   });
 }
 
+function openEditPage(idx) {
+  const p = bookData.pages[idx];
+  if (!p) return;
+
+  editingPageIdEl.value = p.id;
+  memTypeEl.value = p.type || "note";
+  memTypeEl.dispatchEvent(new Event("change"));
+
+  memFontEl.value = p.font || "amiri";
+  memFontSizeEl.value = p.fontSize || "md";
+  document.getElementById("memTitle").value = p.title || "";
+  document.getElementById("memText").value = p.text || "";
+  document.getElementById("memSongName").value = p.songName || "";
+
+  selectedTheme = p.theme || "blush";
+  document.querySelectorAll(".theme-dot").forEach((d) => {
+    d.classList.toggle("active", d.dataset.theme === selectedTheme);
+  });
+
+  if (p.image) {
+    pendingCompressedImage = p.image;
+    uploadPreviewImg.src = p.image;
+    uploadPreviewWrap.classList.remove("hidden");
+    uploadLabelText.textContent = "الصورة الحالية محفوظة ✓";
+  } else {
+    resetImagePreview();
+  }
+
+  pendingAudioData = p.songData || "";
+  audioLabelText.textContent = pendingAudioData ? "يوجد ملف صوتي محفوظ ✓" : "اضغطي لاختيار ملف صوتي";
+
+  submitBtnText.textContent = "حفظ التعديلات";
+  cancelEditBtn.classList.remove("hidden");
+
+  // الانتقال لتبويب الإضافة/التعديل
+  document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
+  document.querySelector('.tab-btn[data-tab="addTab"]').classList.add("active");
+  document.getElementById("addTab").classList.add("active");
+}
+
 function renderManageList() {
   const listEl = document.getElementById("manageList");
   listEl.innerHTML = "";
@@ -704,11 +864,20 @@ function renderManageList() {
         <strong>${idx + 1}. ${escapeHtml(p.title || "صفحة")}</strong>
         <span>${escapeHtml(p.text || p.songName || p.type)}</span>
       </div>
-      <button type="button" class="delete-item-btn">
-        <span class="material-symbols-rounded" style="font-size:16px">delete</span>
-        <span>حذف</span>
-      </button>
+      <div class="manage-actions">
+        <button type="button" class="edit-item-btn">
+          <span class="material-symbols-rounded" style="font-size:16px">edit</span>
+          <span>تعديل</span>
+        </button>
+        <button type="button" class="delete-item-btn">
+          <span class="material-symbols-rounded" style="font-size:16px">delete</span>
+          <span>حذف</span>
+        </button>
+      </div>
     `;
+    item.querySelector(".edit-item-btn").addEventListener("click", () => {
+      openEditPage(idx);
+    });
     item.querySelector(".delete-item-btn").addEventListener("click", () => {
       bookData.pages.splice(idx, 1);
       saveBookData();

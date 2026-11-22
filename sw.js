@@ -1,4 +1,4 @@
-const CACHE_NAME = "samsam-diary-v5";
+const CACHE_NAME = "samsam-diary-v6";
 const CORE_ASSETS = [
   "./",
   "./index.html",

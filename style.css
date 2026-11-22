@@ -1225,6 +1225,54 @@ body {
   flex-wrap: wrap;
 }
 
+/* الخطوط والأحجام المتنوعة للصفحات */
+.font-amiri { font-family: 'Amiri', serif; }
+.font-ruqaa { font-family: 'Aref Ruqaa', serif; }
+.font-marhey { font-family: 'Marhey', cursive, sans-serif; }
+.font-kufi { font-family: 'Reem Kufi', sans-serif; }
+.font-cairo { font-family: 'Cairo', sans-serif; }
+.font-lalezar { font-family: 'Lalezar', cursive, sans-serif; }
+
+.size-sm { font-size: 0.92rem !important; line-height: 1.6 !important; }
+.size-md { font-size: 1.08rem !important; line-height: 1.75 !important; }
+.size-lg { font-size: 1.28rem !important; line-height: 1.85 !important; }
+
+.form-row-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.form-actions-row {
+  display: flex;
+  gap: 8px;
+}
+
+.form-actions-row .primary-btn {
+  flex: 1;
+}
+
+.manage-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.edit-item-btn {
+  background: rgba(255, 148, 194, 0.22);
+  color: #ffd6e8;
+  border: 1px solid rgba(255, 148, 194, 0.45);
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .toast-banner {
   position: fixed;
   bottom: 24px;

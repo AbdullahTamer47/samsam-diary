@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
   <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,1,0&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@400;600;700;800&family=Lalezar&family=Marhey:wght@400;600;700&family=Reem+Kufi:wght@400;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,1,0&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -118,9 +118,10 @@
         </button>
       </div>
 
-      <!-- تبويب إضافة صفحة -->
+      <!-- تبويب إضافة / تعديل صفحة -->
       <div class="tab-content active" id="addTab">
         <form id="addMemoryForm" class="studio-form">
+          <input type="hidden" id="editingPageId" value="" />
           <div class="form-row">
             <label>نوع الصفحة</label>
             <select id="memType">
@@ -129,6 +130,28 @@
               <option value="song">أغنية مفضلة</option>
               <option value="secret">رسالة لنفسي (تتفتح بالضغط)</option>
             </select>
+          </div>
+
+          <div class="form-row-grid">
+            <div class="form-row">
+              <label>نوع الخط</label>
+              <select id="memFont">
+                <option value="amiri">أميري (شعري كلاسيك)</option>
+                <option value="ruqaa">رقعة (خط يد أنيق)</option>
+                <option value="marhey">مرحي (لطيف وناعم)</option>
+                <option value="kufi">ريم كوفي (مودرن)</option>
+                <option value="cairo">كايرو (بسيط ومرتب)</option>
+                <option value="lalezar">لاليزار (عريض مميز)</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>حجم الخط</label>
+              <select id="memFontSize">
+                <option value="md">متوسط</option>
+                <option value="sm">صغير</option>
+                <option value="lg">كبير</option>
+              </select>
+            </div>
           </div>
 
           <div class="form-row">
@@ -168,14 +191,23 @@
           </div>
 
           <div class="form-row hidden" id="songInputRow">
-            <label>اسم الأغنية والفنان</label>
+            <label>اسم الأغنية</label>
             <input type="text" id="memSongName" placeholder="مثال: اسم الأغنية المفضلة" />
+            <label style="margin-top:6px">ارفعي ملف الأغنية (MP3 / صوت من جهازك)</label>
+            <label class="upload-dropzone" for="memAudioFile">
+              <span class="material-symbols-rounded">music_note</span>
+              <span id="audioLabelText">اضغطي لاختيار ملف صوتي</span>
+            </label>
+            <input type="file" id="memAudioFile" accept="audio/*" class="visually-hidden-input" />
           </div>
 
-          <button type="submit" class="primary-btn">
-            <span class="material-symbols-rounded">bookmark_add</span>
-            <span>حفظ في الدفتر</span>
-          </button>
+          <div class="form-actions-row">
+            <button type="submit" class="primary-btn" id="submitMemoryBtn">
+              <span class="material-symbols-rounded">bookmark_add</span>
+              <span id="submitBtnText">حفظ في الدفتر</span>
+            </button>
+            <button type="button" class="secondary-btn hidden" id="cancelEditBtn">إلغاء التعديل</button>
+          </div>
         </form>
       </div>
 
