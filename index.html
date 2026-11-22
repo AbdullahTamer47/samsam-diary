@@ -149,6 +149,44 @@
             </select>
           </div>
 
+          <div class="form-row" id="imageInputRow">
+            <label>اختاري صورة</label>
+            <div class="upload-dropzone">
+              <span class="material-symbols-rounded">add_photo_alternate</span>
+              <span id="uploadLabelText">اضغطي هنا لاختيار صورة من جهازك</span>
+              <input type="file" id="memImageFile" accept="image/*" class="dropzone-file-input" />
+            </div>
+            <div class="upload-preview hidden" id="uploadPreviewWrap">
+              <img id="uploadPreviewImg" src="" alt="معاينة الصورة" />
+              <button type="button" id="clearPreviewBtn" class="clear-preview-btn" title="إزالة الصورة">
+                <span class="material-symbols-rounded">close</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-row hidden" id="songInputRow">
+            <label>اسم الأغنية</label>
+            <input type="text" id="memSongName" placeholder="مثال: اسم الأغنية المفضلة" />
+            <label style="margin-top:6px">ارفعي ملف الأغنية (MP3 / صوت من جهازك)</label>
+            <div class="upload-dropzone">
+              <span class="material-symbols-rounded">music_note</span>
+              <span id="audioLabelText">اضغطي هنا لاختيار ملف صوتي</span>
+              <input type="file" id="memAudioFile" accept="audio/*" class="dropzone-file-input" />
+            </div>
+            <label style="margin-top:6px">البداية من الثانية (اختياري، 0 = من الأول)</label>
+            <input type="number" id="memStartTime" min="0" value="0" placeholder="مثلاً 64 للبداية من 01:04" />
+          </div>
+
+          <div class="form-row">
+            <label>العنوان أو التاريخ (اختياري)</label>
+            <input type="text" id="memTitle" placeholder="مثال: يوم حلو ما يتنسيش" />
+          </div>
+
+          <div class="form-row">
+            <label>الذكرى أو الكلام</label>
+            <textarea id="memText" rows="3" placeholder="اكتبي هنا ذكرياتك أو أي حاجة تخصك..."></textarea>
+          </div>
+
           <div class="form-row-grid">
             <div class="form-row">
               <label>نوع الخط</label>
@@ -184,11 +222,6 @@
             </div>
           </div>
 
-          <div class="font-preview-box theme-blush" id="fontPreviewBox">
-            <span class="preview-label">مثال على شكل الخط:</span>
-            <p id="fontPreviewText" class="font-amiri size-md">أهلاً بيكي يا صمصم 🌸 ده شكل الخط واللون المختار</p>
-          </div>
-
           <div class="form-row">
             <label>لون الصفحة</label>
             <div class="theme-picker" id="themePicker">
@@ -200,42 +233,9 @@
             </div>
           </div>
 
-          <div class="form-row">
-            <label>العنوان أو التاريخ (اختياري)</label>
-            <input type="text" id="memTitle" placeholder="مثال: يوم حلو ما يتنسيش" />
-          </div>
-
-          <div class="form-row">
-            <label>الذكرى أو الكلام</label>
-            <textarea id="memText" rows="3" placeholder="اكتبي هنا ذكرياتك أو أي حاجة تخصك..."></textarea>
-          </div>
-
-          <div class="form-row" id="imageInputRow">
-            <label>اختاري صورة (تُضغط وتُحفظ تلقائياً)</label>
-            <label class="upload-dropzone" for="memImageFile">
-              <span class="material-symbols-rounded">add_photo_alternate</span>
-              <span id="uploadLabelText">اضغطي لاختيار صورة من جهازك</span>
-            </label>
-            <input type="file" id="memImageFile" accept="image/*" class="visually-hidden-input" />
-            <div class="upload-preview hidden" id="uploadPreviewWrap">
-              <img id="uploadPreviewImg" src="" alt="معاينة الصورة" />
-              <button type="button" id="clearPreviewBtn" class="clear-preview-btn" title="إزالة الصورة">
-                <span class="material-symbols-rounded">close</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="form-row hidden" id="songInputRow">
-            <label>اسم الأغنية</label>
-            <input type="text" id="memSongName" placeholder="مثال: اسم الأغنية المفضلة" />
-            <label style="margin-top:6px">ارفعي ملف الأغنية (MP3 / صوت من جهازك)</label>
-            <label class="upload-dropzone" for="memAudioFile">
-              <span class="material-symbols-rounded">music_note</span>
-              <span id="audioLabelText">اضغطي لاختيار ملف صوتي</span>
-            </label>
-            <input type="file" id="memAudioFile" accept="audio/*" class="visually-hidden-input" />
-            <label style="margin-top:6px">البداية من الثانية (اختياري، 0 = من الأول)</label>
-            <input type="number" id="memStartTime" min="0" value="0" placeholder="مثلاً 64 للبداية من 01:04" />
+          <div class="font-preview-box theme-blush" id="fontPreviewBox">
+            <span class="preview-label">مثال على شكل الخط:</span>
+            <p id="fontPreviewText" class="font-amiri size-md">أهلاً بيكي يا صمصم 🌸 ده شكل الخط واللون المختار</p>
           </div>
 
           <div class="form-actions-row">

@@ -1061,6 +1061,7 @@ body {
 }
 
 .upload-dropzone {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1074,6 +1075,15 @@ body {
   font-size: 0.88rem;
   font-weight: 600;
   transition: background 0.2s, border-color 0.2s;
+}
+
+.dropzone-file-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
 }
 
 .upload-dropzone:hover {

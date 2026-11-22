@@ -978,6 +978,11 @@ document.getElementById("addMemoryForm").addEventListener("submit", async (e) =>
   }
 
   await saveBookData();
+  if (!editId) {
+    currentLeaf = isMobileMode()
+      ? bookData.pages.length
+      : Math.ceil(bookData.pages.length / 2);
+  }
   renderBook();
   renderManageList();
   resetFormState();
