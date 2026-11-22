@@ -136,21 +136,57 @@ function playFlipSound() {
 }
 
 // ==========================================
-// بناء صفحات الكتاب ثلاثي الأبعاد
+// بناء صفحات الكتاب ثلاثي الأبعاد (وضع الموبايل + الديسكتوب)
 // ==========================================
+let lastRenderedMobile = null;
+
+function isMobileMode() {
+  return window.innerWidth <= 820;
+}
+
 function renderBook() {
   bookEl.innerHTML = "";
   const pages = bookData.pages || [];
-  const leavesData = [];
+  const mobile = isMobileMode();
+  lastRenderedMobile = mobile;
 
-  // الورقة الأولى: الغلاف الأمامي + أول صفحة داخلية
+  if (mobile) {
+    // في الموبايل: كل صفحة كارت مستقل عشان كل الصفحات تظهر بسلاسة بدون تداخل 3D
+    const allCards = [{ isCover: true }, ...(pages.length ? pages : [createEmptyPage()]), { isEndCover: true }];
+    totalLeaves = allCards.length - 1; // آخر إندكس
+    if (currentLeaf > totalLeaves) currentLeaf = totalLeaves;
+
+    allCards.forEach((cardData, idx) => {
+      const card = createFaceElement(cardData, "mobile-card", idx);
+      card.dataset.index = idx;
+
+      card.addEventListener("click", (e) => {
+        if (e.target.closest("button, .photo-frame, .secret-envelope, a, input")) return;
+        const rect = card.getBoundingClientRect();
+        const tapX = e.clientX - rect.left;
+        // في العربية (RTL): النصف الأيسر يقلب للصفحة التالية، والنصف الأيمن يرجع للسابقة
+        if (tapX < rect.width * 0.55) {
+          goNext();
+        } else {
+          goPrev();
+        }
+      });
+
+      bookEl.appendChild(card);
+    });
+
+    updateBookState();
+    return;
+  }
+
+  // في الديسكتوب: دفتر مزدوج الوجه (Spread)
+  const leavesData = [];
   const firstPage = pages[0] || createEmptyPage();
   leavesData.push({
     front: { isCover: true },
     back: firstPage
   });
 
-  // باقي الصفحات
   for (let i = 1; i < pages.length; i += 2) {
     const frontPage = pages[i];
     const backPage = pages[i + 1] || { isEndCover: true };
@@ -338,34 +374,50 @@ function createFaceElement(data, faceClass, pageNumber) {
 // منطق التقليب وتحديث الـ z-index
 // ==========================================
 function updateBookState(animatingIdx = -1) {
-  const leaves = bookEl.querySelectorAll(".leaf");
-  leaves.forEach((leaf, i) => {
-    if (i < currentLeaf) {
-      leaf.classList.add("flipped");
-    } else {
-      leaf.classList.remove("flipped");
+  const mobile = isMobileMode();
+
+  if (mobile) {
+    const cards = bookEl.querySelectorAll(".mobile-card");
+    cards.forEach((card, i) => {
+      card.classList.remove("is-current", "is-underneath", "is-turned", "is-upcoming");
+      if (i < currentLeaf) {
+        card.classList.add("is-turned");
+      } else if (i === currentLeaf) {
+        card.classList.add("is-current");
+      } else if (i === currentLeaf + 1) {
+        card.classList.add("is-underneath");
+      } else {
+        card.classList.add("is-upcoming");
+      }
+    });
+    bookEl.style.transform = "translateX(0)";
+  } else {
+    const leaves = bookEl.querySelectorAll(".leaf");
+    leaves.forEach((leaf, i) => {
+      if (i < currentLeaf) {
+        leaf.classList.add("flipped");
+      } else {
+        leaf.classList.remove("flipped");
+      }
+
+      if (i === animatingIdx) {
+        leaf.style.zIndex = totalLeaves + 15;
+      } else if (i < currentLeaf) {
+        leaf.style.zIndex = i + 1;
+      } else {
+        leaf.style.zIndex = totalLeaves - i;
+      }
+    });
+
+    if (animatingIdx !== -1) {
+      setTimeout(() => {
+        const target = leaves[animatingIdx];
+        if (!target) return;
+        target.style.zIndex =
+          animatingIdx < currentLeaf ? animatingIdx + 1 : totalLeaves - animatingIdx;
+      }, 420);
     }
 
-    if (i === animatingIdx) {
-      leaf.style.zIndex = totalLeaves + 15;
-    } else if (i < currentLeaf) {
-      leaf.style.zIndex = i + 1;
-    } else {
-      leaf.style.zIndex = totalLeaves - i;
-    }
-  });
-
-  if (animatingIdx !== -1) {
-    setTimeout(() => {
-      const target = leaves[animatingIdx];
-      if (!target) return;
-      target.style.zIndex =
-        animatingIdx < currentLeaf ? animatingIdx + 1 : totalLeaves - animatingIdx;
-    }, 420);
-  }
-
-  const isDesktop = window.innerWidth > 820;
-  if (isDesktop) {
     if (currentLeaf === 0) {
       bookEl.style.transform = "translateX(0)";
     } else if (currentLeaf === totalLeaves) {
@@ -373,8 +425,6 @@ function updateBookState(animatingIdx = -1) {
     } else {
       bookEl.style.transform = "translateX(-50%)";
     }
-  } else {
-    bookEl.style.transform = "translateX(0)";
   }
 
   if (currentLeaf === 0) {
@@ -418,14 +468,17 @@ document.addEventListener("keydown", (e) => {
 });
 
 let touchStartX = 0;
+let touchStartY = 0;
 bookSceneEl.addEventListener("touchstart", (e) => {
   touchStartX = e.changedTouches[0].clientX;
+  touchStartY = e.changedTouches[0].clientY;
 }, { passive: true });
 
 bookSceneEl.addEventListener("touchend", (e) => {
-  const diff = e.changedTouches[0].clientX - touchStartX;
-  if (Math.abs(diff) > 45) {
-    if (diff > 0) goNext();
+  const diffX = e.changedTouches[0].clientX - touchStartX;
+  const diffY = e.changedTouches[0].clientY - touchStartY;
+  if (Math.abs(diffX) > 38 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
+    if (diffX > 0) goNext();
     else goPrev();
   }
 }, { passive: true });
@@ -439,7 +492,14 @@ progressTrackEl.addEventListener("click", (e) => {
   updateBookState();
 });
 
-window.addEventListener("resize", () => updateBookState());
+window.addEventListener("resize", () => {
+  if (lastRenderedMobile !== isMobileMode()) {
+    currentLeaf = 0;
+    renderBook();
+  } else {
+    updateBookState();
+  }
+});
 
 // ==========================================
 // الصوت وتشغيل بطاقة الأغنية
