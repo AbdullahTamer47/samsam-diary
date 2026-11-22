@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#ff62a5" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.json" />
+  <title>دفتر ذكريات صمصم | سما</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,1,0&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- خلفية متحركة ناعمة -->
+  <canvas id="bg-particles" aria-hidden="true"></canvas>
+  <div class="bg-glow bg-glow-1" aria-hidden="true"></div>
+  <div class="bg-glow bg-glow-2" aria-hidden="true"></div>
+
+  <!-- الشريط العلوي -->
+  <header class="top-bar">
+    <div class="brand-badge">
+      <span class="material-symbols-rounded brand-icon">auto_stories</span>
+      <span class="brand-title">دفتر صمصم</span>
+      <span class="page-counter" id="pageCounter">الغلاف</span>
+    </div>
+
+    <div class="top-actions">
+      <span class="offline-pill hidden" id="offlinePill" title="يعمل بدون إنترنت">
+        <span class="material-symbols-rounded">cloud_off</span>
+        <span>أوفلاين</span>
+      </span>
+      <button class="icon-btn" id="soundToggleBtn" title="صوت تقليب الصفحات" aria-label="صوت تقليب الصفحات">
+        <span class="material-symbols-rounded" id="soundIcon">volume_up</span>
+      </button>
+      <button class="pill-btn" id="openStudioBtn" title="إضافة ذكرى جديدة">
+        <span class="material-symbols-rounded">add_photo_alternate</span>
+        <span>إضافة ذكرى</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- العنوان الترحيبي -->
+  <section class="hero-caption">
+    <h1>
+      مساحتك الخاصة يا <span class="highlight-name">سما (صمصم)</span> 🌸
+    </h1>
+    <p class="subtitle">دفتر ذكرياتك الخاص... احفظي فيه صورك، لحظاتك الحلوة، وكل حاجة تخصك</p>
+  </section>
+
+  <!-- مسرح الكتاب ثلاثي الأبعاد -->
+  <main class="stage-wrapper">
+    <button class="nav-arrow nav-prev" id="prevBtn" aria-label="الصفحة السابقة" title="السابق">
+      <span class="material-symbols-rounded">chevron_right</span>
+    </button>
+
+    <div class="book-scene" id="bookScene">
+      <div class="book" id="book">
+        <!-- الصفحات يتم توليدها ديناميكياً عبر app.js -->
+      </div>
+    </div>
+
+    <button class="nav-arrow nav-next" id="nextBtn" aria-label="الصفحة التالية" title="التالي">
+      <span class="material-symbols-rounded">chevron_left</span>
+    </button>
+  </main>
+
+  <!-- شريط التقدم السريع -->
+  <footer class="bottom-controls">
+    <div class="progress-track" id="progressTrack" title="اضغط للانتقال السريع">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="hint-text">
+      اضغطي على الصفحة أو اسحبي للتقليب • اضغطي على أي صورة للتكبير
+    </div>
+  </footer>
+
+  <!-- نافذة تكبير الصور (Lightbox) -->
+  <div class="modal-overlay" id="lightboxModal" aria-hidden="true">
+    <div class="lightbox-content">
+      <button class="close-modal" id="closeLightbox" aria-label="إغلاق">
+        <span class="material-symbols-rounded">close</span>
+      </button>
+      <img id="lightboxImg" src="" alt="صورة الذكرى" />
+      <p id="lightboxCaption" class="lightbox-caption"></p>
+    </div>
+  </div>
+
+  <!-- استوديو الذكريات البسيط -->
+  <div class="modal-overlay" id="studioModal" aria-hidden="true">
+    <div class="studio-card">
+      <div class="studio-header">
+        <h2>
+          <span class="material-symbols-rounded">auto_awesome</span>
+          <span>ذكرياتي الخاصة</span>
+        </h2>
+        <button class="close-modal" id="closeStudio" aria-label="إغلاق">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </div>
+
+      <div class="studio-tabs">
+        <button class="tab-btn active" data-tab="addTab">
+          <span class="material-symbols-rounded">add_circle</span>
+          <span>إضافة صفحة</span>
+        </button>
+        <button class="tab-btn" data-tab="manageTab">
+          <span class="material-symbols-rounded">menu_book</span>
+          <span>صفحاتي</span>
+        </button>
+        <button class="tab-btn" data-tab="syncTab">
+          <span class="material-symbols-rounded">sync</span>
+          <span>المزامنة</span>
+        </button>
+      </div>
+
+      <!-- تبويب إضافة صفحة -->
+      <div class="tab-content active" id="addTab">
+        <form id="addMemoryForm" class="studio-form">
+          <div class="form-row">
+            <label>نوع الصفحة</label>
+            <select id="memType">
+              <option value="photo-note">صورة + ذكرى</option>
+              <option value="note">خاطرة / كلمة حلوة</option>
+              <option value="song">أغنية مفضلة</option>
+              <option value="secret">رسالة لنفسي (تتفتح بالضغط)</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <label>لون الصفحة</label>
+            <div class="theme-picker" id="themePicker">
+              <button type="button" class="theme-dot active" data-theme="blush" style="background:#ffe4ef" title="وردي ناعم"></button>
+              <button type="button" class="theme-dot" data-theme="rose" style="background:#ffd1e3" title="وردي روز"></button>
+              <button type="button" class="theme-dot" data-theme="lavender" style="background:#f3e5ff" title="لافندر بينك"></button>
+              <button type="button" class="theme-dot" data-theme="midnight" style="background:#2b192e" title="ليلي أنيق"></button>
+              <button type="button" class="theme-dot" data-theme="cream" style="background:#fff5f8" title="كريمي وردي"></button>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label>العنوان أو التاريخ (اختياري)</label>
+            <input type="text" id="memTitle" placeholder="مثال: يوم حلو ما يتنسيش" />
+          </div>
+
+          <div class="form-row">
+            <label>الذكرى أو الكلام</label>
+            <textarea id="memText" rows="3" placeholder="اكتبي هنا ذكرياتك أو أي حاجة تخصك..."></textarea>
+          </div>
+
+          <div class="form-row" id="imageInputRow">
+            <label>اختاري صورة (تُضغط وتُحفظ تلقائياً)</label>
+            <label class="upload-dropzone" for="memImageFile">
+              <span class="material-symbols-rounded">add_photo_alternate</span>
+              <span id="uploadLabelText">اضغطي لاختيار صورة من جهازك</span>
+            </label>
+            <input type="file" id="memImageFile" accept="image/*" class="visually-hidden-input" />
+            <div class="upload-preview hidden" id="uploadPreviewWrap">
+              <img id="uploadPreviewImg" src="" alt="معاينة الصورة" />
+              <button type="button" id="clearPreviewBtn" class="clear-preview-btn" title="إزالة الصورة">
+                <span class="material-symbols-rounded">close</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-row hidden" id="songInputRow">
+            <label>اسم الأغنية والفنان</label>
+            <input type="text" id="memSongName" placeholder="مثال: اسم الأغنية المفضلة" />
+          </div>
+
+          <button type="submit" class="primary-btn">
+            <span class="material-symbols-rounded">bookmark_add</span>
+            <span>حفظ في الدفتر</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- تبويب إدارة الصفحات -->
+      <div class="tab-content" id="manageTab">
+        <div class="manage-list" id="manageList"></div>
+      </div>
+
+      <!-- تبويب المزامنة بين الأونلاين والأوفلاين -->
+      <div class="tab-content" id="syncTab">
+        <div class="sync-panel">
+          <div class="sync-status-card" id="syncStatusCard">
+            <span class="material-symbols-rounded" id="syncStatusIcon">cloud_done</span>
+            <div>
+              <strong id="syncStatusTitle">متصل ومتزامن</strong>
+              <p id="syncStatusDesc">كل ذكرياتك محفوظة محلياً ومربوطة تلقائياً بين الأونلاين والأوفلاين.</p>
+            </div>
+          </div>
+
+          <div class="sync-actions">
+            <button type="button" id="exportBackupBtn" class="primary-btn">
+              <span class="material-symbols-rounded">download</span>
+              <span>حفظ نسخة احتياطية (.json)</span>
+            </button>
+            <label class="secondary-btn sync-upload-btn" for="importBackupInput">
+              <span class="material-symbols-rounded">upload</span>
+              <span>استعادة / دمج ذكريات من جهاز آخر</span>
+            </label>
+            <input type="file" id="importBackupInput" accept="application/json,.json" class="visually-hidden-input" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-banner hidden" id="toastBanner"></div>
+
+  <script src="memories-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

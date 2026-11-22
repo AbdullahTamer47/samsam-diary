@@ -1,0 +1,18 @@
+{
+  "name": "دفتر ذكريات صمصم",
+  "short_name": "دفتر صمصم",
+  "description": "دفتر ذكريات سما (صمصم) الخاص - يشتغل أوفلاين وأونلاين",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1e0f24",
+  "theme_color": "#ff62a5",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='44' fill='%23ff62a5'/%3E%3Ctext x='96' y='125' font-size='96' text-anchor='middle'%3E%F0%9F%8C%B8%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
